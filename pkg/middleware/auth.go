@@ -8,8 +8,22 @@ import (
 	"github.com/luisthieme/GoMotion/internal"
 )
 
+type Middleware func(http.HandlerFunc) http.HandlerFunc
+
 type contextKey string
 const ClientProfileKey = contextKey("clientProfile")
+
+
+var Middlewares = []Middleware{
+	TokenAuthMiddleware,
+}
+
+func ApplyMiddlewares(handler http.HandlerFunc) http.HandlerFunc {
+	for _, mw := range Middlewares {
+		handler = mw(handler)
+	}
+	return handler
+}
 
 func TokenAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

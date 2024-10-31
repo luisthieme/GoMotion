@@ -1,24 +1,35 @@
 package internal
 
-type ClientProfile struct {
-	Email string
-	Id string
-	Name string
-	Token string
-}
+import (
+	"database/sql"
+	"log"
 
-// db mockup 
-var Database = map[string]ClientProfile {
-	"user1": {
-		Email: "luis@luis.de",
-		Id: "user1",
-		Name: "Luis Thieme",
-		Token: "123",
-	},
-	"user2": {
-		Email: "max@max.de",
-		Id: "user2",
-		Name: "Max Zoladz",
-		Token: "abc",
-	},
+	_ "github.com/mattn/go-sqlite3"
+)
+
+var Db *sql.DB
+
+func InitDB() {
+	var err error
+	Db, err = sql.Open("sqlite3", "./go_motion.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	query := `CREATE TABLE IF NOT EXISTS processmodels (
+		id UUID PRIMARY KEY,
+		name TEXT NOT NULL,
+		description TEXT,
+		version INTEGER NOT NULL,
+		created_at TIMESTAMP,
+		updated_at TIMESTAMP,
+		is_executable BOOLEAN,
+		process_data JSONB
+	);`
+	_, err = Db.Exec(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Database initialized and connected.")
 }

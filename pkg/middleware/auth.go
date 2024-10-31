@@ -1,11 +1,7 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
-	"strings"
-
-	"github.com/luisthieme/GoMotion/internal"
 )
 
 type Middleware func(http.HandlerFunc) http.HandlerFunc
@@ -14,46 +10,46 @@ type contextKey string
 const ClientProfileKey = contextKey("clientProfile")
 
 
-var Middlewares = []Middleware{
-	TokenAuthMiddleware,
-}
+// var Middlewares = []Middleware{
+// 	TokenAuthMiddleware,
+// }
 
-func ApplyMiddlewares(handler http.HandlerFunc) http.HandlerFunc {
-	for _, mw := range Middlewares {
-		handler = mw(handler)
-	}
-	return handler
-}
+// func ApplyMiddlewares(handler http.HandlerFunc) http.HandlerFunc {
+// 	for _, mw := range Middlewares {
+// 		handler = mw(handler)
+// 	}
+// 	return handler
+// }
 
-func TokenAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var clientId = r.URL.Query().Get("clientId")
-		clientProfile, ok := internal.Database[clientId]
+// func TokenAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		var clientId = r.URL.Query().Get("clientId")
+// 		clientProfile, ok := internal.Database[clientId]
 
-		if !ok || clientId == "" {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
+// 		if !ok || clientId == "" {
+// 			http.Error(w, "Forbidden", http.StatusForbidden)
+// 			return
+// 		}
 
-		token := r.Header.Get("Authorization")
+// 		token := r.Header.Get("Authorization")
 
-		if !isValidToken(clientProfile, token) {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
+// 		if !isValidToken(clientProfile, token) {
+// 			http.Error(w, "Forbidden", http.StatusForbidden)
+// 			return
+// 		}
 
-		ctx := context.WithValue(r.Context(), ClientProfileKey, clientProfile)
-		r = r.WithContext(ctx)
+// 		ctx := context.WithValue(r.Context(), ClientProfileKey, clientProfile)
+// 		r = r.WithContext(ctx)
 
-		next.ServeHTTP(w,r)
+// 		next.ServeHTTP(w,r)
 
-	}
-}
+// 	}
+// }
 
-func isValidToken(profile internal.ClientProfile, token string) bool{
-	if strings.HasPrefix(token, "Bearer ") {
-		return strings.TrimPrefix(token, "Bearer ") == profile.Token
-	}
+// func isValidToken(profile internal.ClientProfile, token string) bool{
+// 	if strings.HasPrefix(token, "Bearer ") {
+// 		return strings.TrimPrefix(token, "Bearer ") == profile.Token
+// 	}
 
-	return false
-}
+// 	return false
+// }

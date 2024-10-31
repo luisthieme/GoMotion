@@ -3,58 +3,108 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/luisthieme/GoMotion/internal"
-	"github.com/luisthieme/GoMotion/pkg/middleware"
 )
 
-func HandleClientProfile(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		GetClientProfile(w,r)
-	case http.MethodPatch:
-		UpdateClientProfile(w,r)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}	
+// Endpoint: INFO
+type EngineInfo struct {
+	Name string
+	Port int
 }
 
-func GetClientProfile(w http.ResponseWriter, r *http.Request) {
-	clientProfile := r.Context().Value(middleware.ClientProfileKey).(internal.ClientProfile)
+// Only GET is allowed as a Method so we dont need seperate handlers
+func HandleEngineInfo(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 
-	response := internal.ClientProfile {
-		Email: clientProfile.Email,
-		Name: clientProfile.Name,
-		Id: clientProfile.Id,
+	response := EngineInfo{
+		Name: internal.EngineName,
+		Port: internal.Port,
 	}
+	
 
 	json.NewEncoder(w).Encode(response)
 }
 
-func UpdateClientProfile(w http.ResponseWriter, r *http.Request) {
-	clientProfile := r.Context().Value(middleware.ClientProfileKey).(internal.ClientProfile)
+// Endpoint: PROCESS_MODELS
+type ProcessModel struct {
+	ID           string          `json:"id"`
+	Name         string          `json:"name"`
+	Description  string          `json:"description,omitempty"`
+	Version      int             `json:"version"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+	IsExecutable bool            `json:"is_executable"`
+	ProcessData  json.RawMessage `json:"process_data"`
+}
 
-	var payloadData internal.ClientProfile
-	err := json.NewDecoder(r.Body).Decode(&payloadData)
+// Handlers for ProcessModels
+func HandleProcessModels(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		GetProcessModels(w,r)
+	case http.MethodPost:
+		PostProcessModels(w,r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
 
+// GET all ProcessModels
+func GetProcessModels(w http.ResponseWriter, r *http.Request) {
+	rows, err := internal.Db.Query("SELECT id, name, description, version, created_at, updated_at, is_executable, process_data FROM processmodels")
 	if err != nil {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		http.Error(w, "Failed to query database", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var processModels []ProcessModel
+	for rows.Next() {
+		var pd ProcessModel
+		err := rows.Scan(&pd.ID, &pd.Name, &pd.Description, &pd.Version, &pd.CreatedAt, &pd.UpdatedAt, &pd.IsExecutable, &pd.ProcessData)
+		if err != nil {
+			http.Error(w, "Failed to scan row", http.StatusInternalServerError)
+			return
+		}
+		processModels = append(processModels, pd)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(processModels); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+// POST a new ProcessModel
+func PostProcessModels(w http.ResponseWriter, r *http.Request) {
+	var pd ProcessModel
+
+	if err := json.NewDecoder(r.Body).Decode(&pd); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	defer r.Body.Close()
+	pd.CreatedAt = time.Now()
+	pd.UpdatedAt = pd.CreatedAt
+	pd.ID = uuid.New().String()
 
-	if payloadData.Email != "" {
-		clientProfile.Email = payloadData.Email
+	query := `INSERT INTO processmodels (id, name, description, version, created_at, updated_at, is_executable, process_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := internal.Db.Exec(query, pd.ID, pd.Name, pd.Description, pd.Version, pd.CreatedAt, pd.UpdatedAt, pd.IsExecutable, pd.ProcessData)
+	if err != nil {
+		http.Error(w, "Failed to insert record", http.StatusInternalServerError)
+		return
 	}
 
-	if payloadData.Name != "" {
-		clientProfile.Name = payloadData.Name
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(pd); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
-
-	internal.Database[clientProfile.Id] = clientProfile
-
-	w.WriteHeader(http.StatusOK)
 }

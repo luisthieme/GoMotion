@@ -1,14 +1,19 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/luisthieme/GoMotion/api"
+	"github.com/luisthieme/GoMotion/internal"
 )
 
+
+
 func main() {
+	internal.InitDB()
 	api.RegisterRoutes()
-	log.Println("Server is running port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("Starting %s on port %d...\n", internal.EngineName, internal.Port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", internal.Port), nil))
 }

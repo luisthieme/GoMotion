@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -10,17 +11,9 @@ import (
 )
 
 // Endpoint: INFO
-type EngineInfo struct {
-	Name string
-	Port int
-}
 
 // Only GET is allowed as a Method so we dont need seperate handlers
 func HandleEngineInfo(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 
 	response := EngineInfo{
@@ -33,16 +26,6 @@ func HandleEngineInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // Endpoint: PROCESS_MODELS
-type ProcessModel struct {
-	ID           string          `json:"id"`
-	Name         string          `json:"name"`
-	Description  string          `json:"description,omitempty"`
-	Version      int             `json:"version"`
-	CreatedAt    time.Time       `json:"created_at"`
-	UpdatedAt    time.Time       `json:"updated_at"`
-	IsExecutable bool            `json:"is_executable"`
-	ProcessData  json.RawMessage `json:"process_data"`
-}
 
 // Handlers for ProcessModels
 func HandleProcessModels(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +41,7 @@ func HandleProcessModels(w http.ResponseWriter, r *http.Request) {
 
 // GET all ProcessModels
 func GetProcessModels(w http.ResponseWriter, r *http.Request) {
-	rows, err := internal.Db.Query("SELECT id, name, description, version, created_at, updated_at, is_executable, process_data FROM processmodels")
+	rows, err := internal.Db.Query("SELECT * FROM processmodels")
 	if err != nil {
 		http.Error(w, "Failed to query database", http.StatusInternalServerError)
 		return
@@ -107,4 +90,76 @@ func PostProcessModels(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(pd); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
+}
+
+// Endpoint: PROCESS_MODEL
+
+// Handler for ProcessModel
+func HandleProcessModel(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		GetProcessModel(w,r)
+	case http.MethodDelete:
+		DeleteProcessModel(w,r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func GetProcessModel(w http.ResponseWriter, r *http.Request) {
+	processModelId := r.PathValue("processModelId")
+
+	var processModel ProcessModel
+	err := internal.Db.QueryRow(
+		"SELECT * FROM processmodels WHERE id=$1",
+		processModelId,
+	).Scan(
+		&processModel.ID,
+		&processModel.Name,
+		&processModel.Description,
+		&processModel.Version,
+		&processModel.CreatedAt,
+		&processModel.UpdatedAt,
+		&processModel.IsExecutable,
+		&processModel.ProcessData,
+	)
+	
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "No process model found with the given ID", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to query database", http.StatusInternalServerError)
+		return
+	}
+
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(processModel); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+func DeleteProcessModel(w http.ResponseWriter, r *http.Request) {
+	processModelId := r.PathValue("processModelId")
+
+	result, err := internal.Db.Exec("DELETE FROM processmodels WHERE id=$1", processModelId)
+
+	if err != nil {
+		http.Error(w, "Failed to execute delete query", http.StatusInternalServerError)
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		http.Error(w, "Failed to retrieve affected rows", http.StatusInternalServerError)
+		return
+	}
+
+	if rowsAffected == 0 {
+		http.Error(w, "No process model found with the given ID", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent) 
 }

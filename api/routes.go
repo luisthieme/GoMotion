@@ -4,9 +4,10 @@ import (
 	"net/http"
 )
 
+// basePath := "/go_motion/api/v1/"
 
-func RegisterRoutes() {
-	// http.HandleFunc("/user/profile", middleware.ApplyMiddlewares(HandleClientProfile))
-	http.HandleFunc("go_motion/api/v1/info", HandleEngineInfo)
-	http.HandleFunc("go_motion/api/v1/process_models", HandleProcessModels)
+func RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /go_motion/api/v1/info", HandleEngineInfo)
+	mux.HandleFunc("/go_motion/api/v1/process_models", HandleProcessModels)
+	mux.HandleFunc("/go_motion/api/v1/process_models/{processModelId}", HandleProcessModel)
 }

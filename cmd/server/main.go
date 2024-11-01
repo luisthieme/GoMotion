@@ -13,7 +13,8 @@ import (
 
 func main() {
 	internal.InitDB()
-	api.RegisterRoutes()
+	mux := http.NewServeMux()
+	api.RegisterRoutes(mux)
 	log.Printf("Starting %s on port %d...\n", internal.EngineName, internal.Port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", internal.Port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", internal.Port), mux))
 }

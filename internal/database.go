@@ -17,14 +17,12 @@ func InitDB() {
 	}
 
 	query := `CREATE TABLE IF NOT EXISTS processmodels (
-		id UUID PRIMARY KEY,
+		id TEXT PRIMARY KEY,
 		name TEXT NOT NULL,
-		description TEXT,
-		version INTEGER NOT NULL,
-		created_at TIMESTAMP,
-		updated_at TIMESTAMP,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		is_executable BOOLEAN,
-		process_data JSONB
+		xml TEXT
 	);`
 	_, err = Db.Exec(query)
 	if err != nil {

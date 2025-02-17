@@ -2,13 +2,11 @@ package main
 
 import (
 	"github.com/luisthieme/GoMotion/core"
-	"github.com/luisthieme/GoMotion/internal"
 )
 
 
 
 func main() {
-	internal.InitDB()
-	engine := core.Engine{}
+	engine := core.NewEngine("go_motion", "localhost:777")
 	engine.Start()
 }

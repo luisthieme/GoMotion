@@ -1,50 +1,58 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Engine struct {
 	Name             string
 	Url              string
+	ProcessDefinitions map[string]Definitions
+	ProcessModels map[string]Process
 	ProcessInstances map[string]ProcessInstance
 }
 
+func NewEngine(name, url string) *Engine {
+	return &Engine{
+		Name:               name,
+		Url:                url,
+		ProcessDefinitions: make(map[string]Definitions),
+		ProcessModels:      make(map[string]Process),
+		ProcessInstances: 	make(map[string]ProcessInstance),
+	}
+}
+
 // Start starts the engine
-func (e Engine) Start() {
+func (e *Engine) Start() {
 	fmt.Println("Starting Engine...")
+	e.LoadAndAddProcessDefinition("/Users/guestuser/5minds/PrivateStuff/GoMotion/processes/diagram.bpmn")
+	e.StartProcess("Process_108m3pl")
 }
 
-// GetAllProcessInstances returns all process instances
-func (e Engine) GetAllProcessInstances() map[string]ProcessInstance {
-	return e.ProcessInstances
-}
+func (e *Engine) LoadAndAddProcessDefinition(filePath string) error {
+	definition, error := ParseBpmnFromFile(filePath)
 
-// GetProcessInstanceById retrieves a process instance by ID
-func (e Engine) GetProcessInstanceById(id string) (ProcessInstance, error) {
-	processInstance, exists := e.ProcessInstances[id]
-	if !exists {
-		return ProcessInstance{}, fmt.Errorf("process instance with ID %s not found", id)
-	}
-	return processInstance, nil
-}
-
-// StartProcessInstance starts the process instance with the specified ID
-func (e Engine) StartProcessInstance(id string) (ProcessInstance, error) {
-	processInstance, exists := e.ProcessInstances[id]
-	if !exists {
-		return ProcessInstance{}, fmt.Errorf("process instance with ID %s not found", id)
+	if error != nil {
+		return error
 	}
 
-	err := processInstance.Start();
+	e.ProcessDefinitions[definition.XMLName.Local] = *definition
 
-	if err != nil {
-		return ProcessInstance{}, err
+	for _, process := range definition.Processes {
+		e.ProcessModels[process.ID] = process
 	}
 
-	return processInstance, nil
+	return nil
 }
 
-func (e Engine) AddProcessInstance(processInstance *ProcessInstance) error {
+func (e *Engine) StartProcess(processModelId string) error {
+	processModel := e.ProcessModels[processModelId]
+
+	processInstance := NewProcessInstance(processModel)
+
 	e.ProcessInstances[processInstance.Id] = *processInstance
+
+	processInstance.Execute()
 
 	return nil
 }

@@ -1,29 +1,15 @@
 package core
 
-import (
-	"fmt"
-
-	"github.com/google/uuid"
-)
+import "fmt"
 
 type StartEventHandler struct {
-	ID uuid.UUID
-	*StartEvent
+	StartEvent *StartEvent
 }
 
-
-func NewStartEventHandler(startEvent *StartEvent) *StartEventHandler {
-	return &StartEventHandler{
-		ID: uuid.New(),
-		StartEvent: startEvent,
-		
-	}
+func NewStartEventHanler(startevent *StartEvent) *StartEventHandler {
+	return &StartEventHandler{ StartEvent: startevent}
 }
 
 func (s *StartEventHandler) Execute() {
-	fmt.Printf("ProcessInstance started with StartEvent: %s", s.Name)
-	// fuer alle outgoing flows den richtigen handler erstellen
-
-	// die execute function von allen oben erstellten handlern aufrufen handlern aufrufen
+	fmt.Println("Executing Startevent")
 }
-

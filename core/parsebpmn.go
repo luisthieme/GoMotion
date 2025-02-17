@@ -3,18 +3,22 @@ package core
 import (
 	"encoding/xml"
 	"fmt"
-	"strings"
+	"os"
 )
 
-func ParseBpmnFromString(xmlString string, definition *BPMNDefinitions) error{
+func ParseBpmnFromFile(filePath string) (*Definitions, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("could not open file: %v", err)
+	}
+	defer file.Close()
 
-	reader := strings.NewReader(xmlString)
-	decoder := xml.NewDecoder(reader)
-
-	if err := decoder.Decode(&definition); err != nil {
-		fmt.Println("Error decoding XML: ", err)
-		return err
+	decoder := xml.NewDecoder(file)
+	var definitions Definitions
+	err = decoder.Decode(&definitions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse BPMN XML: %v", err)
 	}
 
-	return nil
+	return &definitions, nil
 }

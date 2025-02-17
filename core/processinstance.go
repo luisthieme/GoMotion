@@ -7,28 +7,89 @@ import (
 )
 
 type ProcessInstance struct {
-	Id uuid.UUID
+	Id string
 	ProcessModel Process
+	CurrentElement string
 }
 
-//Start starts the process instance
-func (p ProcessInstance) Start() error {
-	fmt.Println("Starting ProcessInstance...")
+func NewProcessInstance(processModel Process) *ProcessInstance {
+	return &ProcessInstance{
+		Id:           uuid.NewString(),
+		ProcessModel: processModel,
+	}
+}
 
-	p.Execute()
+// Execute starts the process instance and executes events and tasks based on SequenceFlows.
+func (p *ProcessInstance) Execute() error {
+	fmt.Println("Executing process instance:", p.Id)
+
+	if len(p.ProcessModel.StartEvents) < 1 {
+		error := fmt.Errorf("no StartEvent in ProcessModel")
+
+		return error
+	}
+
 	
+	startEvent := p.ProcessModel.StartEvents[0]
+	p.CurrentElement = startEvent.ID
+	startEventHandler := NewStartEventHanler(&startEvent)
+	startEventHandler.Execute()
+	p.CurrentElement = p.getNextElementFromFlow(startEvent.Outgoing)
+
+
+	for {
+		// Check if there is a new CurrentElement or if the ProcessInstance is ending
+		if p.CurrentElement == "" {
+			fmt.Println("ProcessInstance finished.")
+			break
+		}
+
+		// Check if CurrentElement is an EndEvent and execute it
+		var endEvent *EndEvent
+
+		for _, e := range p.ProcessModel.EndEvents {
+			if e.ID == p.CurrentElement {
+				endEvent = &e
+				break
+			}
+		}
+
+		if endEvent != nil {
+			endEventHandler := NewEndEventHandler(endEvent)
+			endEventHandler.Execute()
+			p.CurrentElement = ""
+		}
+
+		// Check if the CurrentElement is a Task and execute it
+		var task *Task
+		
+		for _, t := range p.ProcessModel.Tasks {
+			if t.ID == p.CurrentElement {
+				task = &t
+				break
+			}
+		}
+
+		if task != nil {
+			taskHandler := NewTaskHandler(task)
+			taskHandler.Execute()
+			p.CurrentElement = p.getNextElementFromFlow(task.Outgoing)
+		}
+		
+	}
+	
+
 	return nil
 }
 
-//Execute shedules the execution of the next task
-func (p ProcessInstance) Execute() error {
-	fmt.Printf("Executing ProcessInstance...")
+func (p *ProcessInstance) getNextElementFromFlow(outgoing []string) string {
+	for _, sequenceFlowID := range outgoing {
+		for _, flow := range p.ProcessModel.SequenceFlows {
+			if flow.ID == sequenceFlowID {
+				return flow.TargetRef
+			}
+		}
+	}
+	return ""
+}
 
-	startEvents := p.ProcessModel.GetStartEvents()
-
-	startEventHandler := NewStartEventHandler(startEvents[0])
-
-	startEventHandler.Execute()
-
-	return nil
-} 

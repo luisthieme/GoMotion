@@ -31,6 +31,7 @@ func (p *ProcessInstance) Execute() error {
 		return error
 	}
 
+	p.Engine.EventManager.Broadcast(Event{ Name: "executing", Type: "processinstance", Id: p.Id})
 	
 	startEvent := p.ProcessModel.StartEvents[0]
 	p.CurrentElement = startEvent.ID
@@ -43,6 +44,7 @@ func (p *ProcessInstance) Execute() error {
 		// Check if there is a new CurrentElement or if the ProcessInstance is ending
 		if p.CurrentElement == "" {
 			fmt.Println("ProcessInstance finished.")
+			p.Engine.EventManager.Broadcast(Event{ Name: "finished", Type: "processinstance", Id: p.Id})
 			break
 		}
 
@@ -57,7 +59,7 @@ func (p *ProcessInstance) Execute() error {
 		}
 
 		if endEvent != nil {
-			endEventHandler := NewEndEventHandler(endEvent)
+			endEventHandler := NewEndEventHandler(endEvent, p)
 			endEventHandler.Execute()
 			p.CurrentElement = ""
 		}
@@ -73,7 +75,7 @@ func (p *ProcessInstance) Execute() error {
 		}
 
 		if task != nil {
-			taskHandler := NewTaskHandler(task)
+			taskHandler := NewTaskHandler(task, p)
 			taskHandler.Execute()
 			p.CurrentElement = p.getNextElementFromFlow(task.Outgoing)
 		}

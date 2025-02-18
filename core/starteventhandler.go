@@ -19,4 +19,5 @@ func NewStartEventHanler(startevent *StartEvent, processInstance *ProcessInstanc
 func (s *StartEventHandler) Execute() {
 	s.ProcessInstance.Engine.EventManager.Broadcast(Event{ Name: "executing", Type: "startevent", Id: s.Id})
 	fmt.Println("Executing Startevent")
+	s.ProcessInstance.Engine.EventManager.Broadcast(Event{ Name: "finished", Type: "startevent", Id: s.Id})
 }

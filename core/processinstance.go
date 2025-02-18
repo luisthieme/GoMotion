@@ -10,12 +10,14 @@ type ProcessInstance struct {
 	Id string
 	ProcessModel Process
 	CurrentElement string
+	Engine *Engine
 }
 
-func NewProcessInstance(processModel Process) *ProcessInstance {
+func NewProcessInstance(processModel Process, engine *Engine) *ProcessInstance {
 	return &ProcessInstance{
 		Id:           uuid.NewString(),
 		ProcessModel: processModel,
+		Engine: engine,
 	}
 }
 
@@ -32,7 +34,7 @@ func (p *ProcessInstance) Execute() error {
 	
 	startEvent := p.ProcessModel.StartEvents[0]
 	p.CurrentElement = startEvent.ID
-	startEventHandler := NewStartEventHanler(&startEvent)
+	startEventHandler := NewStartEventHanler(&startEvent, p)
 	startEventHandler.Execute()
 	p.CurrentElement = p.getNextElementFromFlow(startEvent.Outgoing)
 

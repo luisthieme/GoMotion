@@ -10,6 +10,7 @@ type ProcessInstance struct {
 	Id string
 	ProcessModel Process
 	CurrentElement string
+	State string
 	Engine *Engine
 }
 
@@ -31,6 +32,9 @@ func (p *ProcessInstance) Execute() error {
 		return error
 	}
 
+	p.State = "running"
+	p.Engine.Db.SaveProcessInstanceToDB(p)
+
 	p.Engine.EventManager.Broadcast(Event{ Name: "executing", Type: "processinstance", Id: p.Id})
 	
 	startEvent := p.ProcessModel.StartEvents[0]
@@ -44,6 +48,8 @@ func (p *ProcessInstance) Execute() error {
 		// Check if there is a new CurrentElement or if the ProcessInstance is ending
 		if p.CurrentElement == "" {
 			fmt.Println("ProcessInstance finished.")
+			p.State = "finished"
+			p.Engine.Db.PersistProcessInstance(p)
 			p.Engine.EventManager.Broadcast(Event{ Name: "finished", Type: "processinstance", Id: p.Id})
 			break
 		}

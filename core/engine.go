@@ -12,6 +12,7 @@ type Engine struct {
 	Version 	       string
 	Router             Router
 	EventManager       EventManager
+	Db				   *Database
 	ProcessDefinitions map[string]Definitions
 	ProcessModels      map[string]Process
 	ProcessInstances   map[string]ProcessInstance
@@ -24,6 +25,7 @@ func NewEngine(name, url string) *Engine {
 		Version: 			"0.0.1",
 		Router: 			Router{},
 		EventManager:       *NewEventManager(),
+		Db:                 NewDatabase(),
 		ProcessDefinitions: make(map[string]Definitions),
 		ProcessModels:      make(map[string]Process),
 		ProcessInstances: 	make(map[string]ProcessInstance),
@@ -34,7 +36,12 @@ func NewEngine(name, url string) *Engine {
 // Starts the engine
 func (e *Engine) Start() {
 	fmt.Println("Starting Engine...")
+	fmt.Println("Initializing Database...")
+	e.Db.InitializeDB()
+	fmt.Println("Initializing Router...")
 	e.InitRouter()
+	fmt.Println("Loading ProcessModels...")
+	e.LoadProcessModels()
 	fmt.Println("Engine running on http://localhost:6969")
 	log.Fatal(http.ListenAndServe(":6969", e.Router.Mux))
 }
@@ -53,7 +60,9 @@ func (e *Engine) LoadAndAddProcessDefinition(filePath string) error {
 		e.ProcessModels[process.ID] = process
 	}
 
-	return nil
+	err := e.Db.SaveDefinitionToDB(definition)
+
+	return err
 }
 
 func (e *Engine) AddProcessDefinition(definition *Definitions) {
@@ -62,6 +71,8 @@ func (e *Engine) AddProcessDefinition(definition *Definitions) {
 	for _, process := range definition.Processes {
 		e.ProcessModels[process.ID] = process
 	}
+
+	e.Db.SaveDefinitionToDB(definition)
 }
 
 func (e *Engine) InitRouter() {
@@ -85,3 +96,26 @@ func (e *Engine) StartProcess(processModelId string) error {
 
 	return nil
 }
+
+func (e *Engine) LoadProcessModels() {
+	xmls, err := e.Db.LoadAllXMLs()
+	
+	if err != nil {
+		log.Fatalf("Cannot get ProcessDefinitions from DB: %v", err)
+	}
+
+	for _, xmlString := range xmls {
+		definition, err := ParseFromBpmnString(xmlString)
+		if err != nil {
+			log.Printf("Failed to parse process definition: %v", err)
+			continue
+		}
+
+		for _, process := range definition.Processes {
+			e.ProcessModels[process.ID] = process
+		}
+	}
+
+	log.Println("Process models loaded successfully")
+}
+

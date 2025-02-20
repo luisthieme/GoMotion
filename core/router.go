@@ -20,6 +20,8 @@ func (r *Router) RegisterRoutes() {
 	r.Mux.HandleFunc("GET /go_motion/api/v1/info", r.HandleEngineInfo)
 	r.Mux.HandleFunc("POST /go_motion/api/v1/start/{processModelId}", r.HandleStartProcessModel)
 	r.Mux.HandleFunc("POST /go_motion/api/v1/process_definitions", r.HandleDeployProcessModel)
+	r.Mux.HandleFunc("/go_motion/api/v1/process_instances", r.HandleProcessInstances)
+	r.Mux.HandleFunc("GET /go_motion/api/v1/process_models", r.HandleProcessModels)
 }
 
 func (r *Router) HandleBase(w http.ResponseWriter, req *http.Request) {
@@ -86,6 +88,7 @@ func (r *Router) HandleHello(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) HandleStartProcessModel(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	processModelId := req.PathValue("processModelId")
 
 	r.Engine.StartProcess(processModelId)
@@ -132,3 +135,86 @@ func (r *Router) HandleDeployProcessModel(w http.ResponseWriter, req *http.Reque
 
 	json.NewEncoder(w).Encode(response)
 }
+
+func (r *Router) HandleProcessInstances(w http.ResponseWriter, req *http.Request) {
+	// CORS-Header setzen
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	// OPTIONS-Anfragen für CORS vorab genehmigen
+	if req.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	switch req.Method {
+	case http.MethodGet:
+		rows, err := r.Engine.Db.Db.Query("SELECT id, process_model_name, state FROM process_instances")
+		if err != nil {
+			http.Error(w, "Failed to query process instances", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		var processInstances []ProcessInstanceApiResponse
+		for rows.Next() {
+			var pi ProcessInstanceApiResponse
+			err := rows.Scan(&pi.Id, &pi.ProcessModel, &pi.State)
+			if err != nil {
+				http.Error(w, "Failed to scan process instance", http.StatusInternalServerError)
+				return
+			}
+			processInstances = append(processInstances, pi)
+		}
+
+		if err := rows.Err(); err != nil {
+			http.Error(w, "Error iterating through process instances", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(processInstances); err != nil {
+			http.Error(w, "Failed to encode process instances as JSON", http.StatusInternalServerError)
+			return
+		}
+
+	case http.MethodDelete:
+		_, err := r.Engine.Db.Db.Exec("DELETE FROM process_instances")
+		if err != nil {
+			http.Error(w, "Failed to delete process instances", http.StatusInternalServerError)
+			return
+		}
+
+		r.Engine.ProcessInstances = make(map[string]ProcessInstance)
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"message": "All process instances deleted successfully"}`))
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+
+func (r *Router) HandleProcessModels(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	// Extract process models from the engine
+	processModels := []map[string]string{}
+
+	for _, process := range r.Engine.ProcessModels {
+		processModels = append(processModels, map[string]string{
+			"ID":      process.ID,
+			"XMLName": process.XMLName.Local,
+		})
+	}
+
+	// Encode the result as JSON and send the response
+	if err := json.NewEncoder(w).Encode(processModels); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
+

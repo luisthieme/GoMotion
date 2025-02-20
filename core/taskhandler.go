@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -19,5 +20,6 @@ func NewTaskHandler(task *Task, processInstance *ProcessInstance) *TaskHandler {
 func (t *TaskHandler) Execute() {
 	t.ProcessInstance.Engine.EventManager.Broadcast(Event{ Name: "executing", Type: "task", Id: t.Id})
 	fmt.Println("Executing Task")
+	time.Sleep(10 * time.Second)
 	t.ProcessInstance.Engine.EventManager.Broadcast(Event{ Name: "finished", Type: "task", Id: t.Id})
 }

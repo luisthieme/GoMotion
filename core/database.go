@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -29,7 +28,6 @@ func (d *Database) InitializeDB() error {
 	definitionsTableCreation := `
 	CREATE TABLE IF NOT EXISTS definitions (
 		id TEXT PRIMARY KEY,
-		name TEXT,
 		xml TEXT
 	);
 	`
@@ -66,7 +64,7 @@ func (d *Database) SaveDefinitionToDB(definition *Definitions) error {
 	fmt.Println()
 
 	// Insert the serialized data into the definitions table
-	_, err = d.Db.Exec("INSERT INTO definitions (id, name, xml) VALUES (?,?,?)", uuid.NewString(), definition.XMLName.Local, string(data))
+	_, err = d.Db.Exec("INSERT INTO definitions (id, xml) VALUES (?,?)", definition.ID, string(data))
 	if err != nil {
 		return err
 	}
@@ -109,7 +107,7 @@ func (d *Database) SaveProcessInstanceToDB(processInstance *ProcessInstance) err
 	_, err := d.Db.Exec(
 		"INSERT INTO process_instances (id, process_model_name, current_element, state) VALUES (?,?,?,?)",
 		processInstance.Id,
-		processInstance.ProcessModel.XMLName.Local,
+		processInstance.ProcessModel.Name,
 		processInstance.CurrentElement,
 		processInstance.State,
 	)

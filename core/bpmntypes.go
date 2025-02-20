@@ -4,19 +4,22 @@ import "encoding/xml"
 
 // Definitions repräsentiert das Wurzelelement der BPMN-Datei
 type Definitions struct {
-	XMLName 	xml.Name  `xml:"definitions"`
-	Processes   []Process `xml:"process"`
+	XMLName    xml.Name  `xml:"definitions"`
+	ID         string    `xml:"id,attr"`
+	Processes  []Process `xml:"process"`
 }
 
 // Process enthält alle Flow-Elemente des BPMN-Modells
 type Process struct {
 	XMLName       xml.Name       `xml:"process"`
 	ID            string         `xml:"id,attr"`
+	Name          string         `xml:"name,attr"`
 	StartEvents   []StartEvent   `xml:"startEvent"`
 	Tasks         []Task         `xml:"task"`
 	EndEvents     []EndEvent     `xml:"endEvent"`
 	SequenceFlows []SequenceFlow `xml:"sequenceFlow"`
 }
+
 
 // StartEvent repräsentiert ein Start-Event
 type StartEvent struct {

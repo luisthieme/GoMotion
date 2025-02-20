@@ -160,7 +160,7 @@ func (r *Router) HandleProcessInstances(w http.ResponseWriter, req *http.Request
 		var processInstances []ProcessInstanceApiResponse
 		for rows.Next() {
 			var pi ProcessInstanceApiResponse
-			err := rows.Scan(&pi.Id, &pi.ProcessModel, &pi.State)
+			err := rows.Scan(&pi.Id, &pi.ProcessModelName, &pi.State)
 			if err != nil {
 				http.Error(w, "Failed to scan process instance", http.StatusInternalServerError)
 				return
@@ -206,10 +206,11 @@ func (r *Router) HandleProcessModels(w http.ResponseWriter, req *http.Request) {
 
 	for _, process := range r.Engine.ProcessModels {
 		processModels = append(processModels, map[string]string{
-			"ID":      process.ID,
-			"XMLName": process.XMLName.Local,
+			"name": process.Name,
+			"id": process.ID,
+			"definition_id": process.DefitionionId,
 		})
-	}
+	} 
 
 	// Encode the result as JSON and send the response
 	if err := json.NewEncoder(w).Encode(processModels); err != nil {

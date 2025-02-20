@@ -8,13 +8,13 @@ import (
 
 type ProcessInstance struct {
 	Id string
-	ProcessModel Process
+	ProcessModel ProcessModel
 	CurrentElement string
 	State string
 	Engine *Engine
 }
 
-func NewProcessInstance(processModel Process, engine *Engine) *ProcessInstance {
+func NewProcessInstance(processModel ProcessModel, engine *Engine) *ProcessInstance {
 	return &ProcessInstance{
 		Id:           uuid.NewString(),
 		ProcessModel: processModel,

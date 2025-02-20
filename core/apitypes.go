@@ -1,12 +1,12 @@
 package core
 
 type EngineInfo struct {
-	Name string
+	Name    string
 	Version string
 }
 
 type ProcessInstanceApiResponse struct {
-	Id            string `json:"id"`
-	ProcessModel  string `json:"process_model"`
-	State         string `json:"state"`
+	Id               string `json:"id"`
+	ProcessModelName string `json:"process_model_name"`
+	State            string `json:"state"`
 }

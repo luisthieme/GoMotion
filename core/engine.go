@@ -8,26 +8,28 @@ import (
 
 type Engine struct {
 	Name               string
-	Url                string
+	Port               string
 	Version 	       string
 	Router             Router
 	EventManager       EventManager
 	Db				   *Database
 	ProcessDefinitions map[string]Definitions
-	ProcessModels      map[string]Process
+	ProcessModels      map[string]ProcessModel
 	ProcessInstances   map[string]ProcessInstance
 }
 
-func NewEngine(name, url string) *Engine {
+
+// Constructor
+func NewEngine(name, port string) *Engine {
 	return &Engine{
 		Name:               name,
-		Url:                url,
+		Port:               port,
 		Version: 			"0.0.1",
 		Router: 			Router{},
 		EventManager:       *NewEventManager(),
 		Db:                 NewDatabase(),
 		ProcessDefinitions: make(map[string]Definitions),
-		ProcessModels:      make(map[string]Process),
+		ProcessModels:      make(map[string]ProcessModel),
 		ProcessInstances: 	make(map[string]ProcessInstance),
 
 	}
@@ -36,17 +38,21 @@ func NewEngine(name, url string) *Engine {
 // Starts the engine
 func (e *Engine) Start() {
 	fmt.Println("Starting Engine...")
+
 	fmt.Println("Initializing Database...")
 	e.Db.InitializeDB()
+
 	fmt.Println("Initializing Router...")
 	e.InitRouter()
+
 	fmt.Println("Loading ProcessModels...")
 	e.LoadProcessModels()
-	fmt.Println("Engine running on http://localhost:6969")
-	log.Fatal(http.ListenAndServe(":6969", e.Router.Mux))
+	
+	fmt.Println("Engine running on http://localhost:" + e.Port)
+	log.Fatal(http.ListenAndServe(":" + e.Port, e.Router.Mux))
 }
 
-// Loads and parses the BPMN-File and saves it in the Engine
+// Loads and parses the BPMN-File and saves it in the Engine and the connected DB
 func (e *Engine) LoadAndAddProcessDefinition(filePath string) error {
 	definition, error := ParseBpmnFromFile(filePath)
 
@@ -57,7 +63,7 @@ func (e *Engine) LoadAndAddProcessDefinition(filePath string) error {
 	e.ProcessDefinitions[definition.XMLName.Local] = *definition
 
 	for _, process := range definition.Processes {
-		e.ProcessModels[process.ID] = process
+		e.ProcessModels[process.ID] = ProcessModel{ Process: process, DefitionionId: definition.ID }
 	}
 
 	err := e.Db.SaveDefinitionToDB(definition)
@@ -65,11 +71,12 @@ func (e *Engine) LoadAndAddProcessDefinition(filePath string) error {
 	return err
 }
 
+// 
 func (e *Engine) AddProcessDefinition(definition *Definitions) {
 	e.ProcessDefinitions[definition.XMLName.Local] = *definition
 
 	for _, process := range definition.Processes {
-		e.ProcessModels[process.ID] = process
+		e.ProcessModels[process.ID] = ProcessModel{ Process: process, DefitionionId: definition.ID }
 	}
 
 	e.Db.SaveDefinitionToDB(definition)
@@ -99,7 +106,7 @@ func (e *Engine) StartProcess(processModelId string) error {
 
 func (e *Engine) LoadProcessModels() {
 	xmls, err := e.Db.LoadAllXMLs()
-	
+
 	if err != nil {
 		log.Fatalf("Cannot get ProcessDefinitions from DB: %v", err)
 	}
@@ -112,7 +119,7 @@ func (e *Engine) LoadProcessModels() {
 		}
 
 		for _, process := range definition.Processes {
-			e.ProcessModels[process.ID] = process
+			e.ProcessModels[process.ID] = ProcessModel{ Process: process, DefitionionId: definition.ID }
 		}
 	}
 

@@ -7,6 +7,6 @@ import (
 
 
 func main() {
-	engine := core.NewEngine("go_motion", "localhost:777")
+	engine := core.NewEngine("luis_engine", "6969")
 	engine.Start()
 }

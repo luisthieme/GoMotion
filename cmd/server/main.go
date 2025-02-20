@@ -1,20 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-
-	"github.com/luisthieme/GoMotion/api"
-	"github.com/luisthieme/GoMotion/internal"
+	"github.com/luisthieme/GoMotion/core"
 )
 
 
 
 func main() {
-	internal.InitDB()
-	mux := http.NewServeMux()
-	api.RegisterRoutes(mux)
-	log.Printf("Starting %s on port %d...\n", internal.EngineName, internal.Port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", internal.Port), mux))
+	engine := core.NewEngine("go_motion", "localhost:777")
+	engine.Start()
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 type Router struct {
@@ -13,62 +15,34 @@ type Router struct {
 }
 
 func (r *Router) RegisterRoutes() {
+	basePath := "/go_motion/api/v1"
 	r.Mux.HandleFunc("/ws", r.Engine.EventManager.HandleConnections)
-
 	r.Mux.HandleFunc("/", r.HandleBase)
-	r.Mux.HandleFunc("GET /hello", r.HandleHello)
-	r.Mux.HandleFunc("GET /go_motion/api/v1/info", r.HandleEngineInfo)
-	r.Mux.HandleFunc("POST /go_motion/api/v1/start/{processModelId}", r.HandleStartProcessModel)
-	r.Mux.HandleFunc("POST /go_motion/api/v1/process_definitions", r.HandleDeployProcessModel)
-	r.Mux.HandleFunc("/go_motion/api/v1/process_instances", r.HandleProcessInstances)
-	r.Mux.HandleFunc("GET /go_motion/api/v1/process_models", r.HandleProcessModels)
+
+	r.Mux.HandleFunc(basePath + "/info", r.HandleEngineInfo)
+
+	r.Mux.HandleFunc(basePath + "/process_definitions", r.HandleDeployProcessModel)
+	r.Mux.HandleFunc(basePath + "/process_models", r.HandleProcessModels)
+
+	r.Mux.HandleFunc(basePath + "/start/{processModelId}", r.HandleStartProcessModel)
+	
+	r.Mux.HandleFunc(basePath + "/process_instances", r.HandleProcessInstances)
 }
 
 func (r *Router) HandleBase(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	html := `
-		<!DOCTYPE html>
-		<html lang="en">
-		<head>
-			<meta charset="UTF-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<title>Go-Motion Workflow Engine</title>
-			<style>
-				body {
-					font-family: Arial, sans-serif;
-					display: flex;
-					justify-content: center;
-					align-items: center;
-					height: 100vh;
-					margin: 0;
-					background-color: #f0f0f0;
-				}
-				.container {
-					text-align: center;
-					padding: 2rem;
-					background-color: white;
-					border-radius: 8px;
-					box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-				}
-				h1 {
-					color: #333;
-				}
-				p {
-					color: #666;
-				}
-			</style>
-		</head>
-		<body>
-			<div class="container">
-				<h1>Welcome to Go-Motion</h1>
-				<p>The Engine is up and running!</p>
-			</div>
-		</body>
-		</html>
-	`
+
+	filePath := filepath.Join("html", "index.html") 
+
+	html, err := os.ReadFile(filePath)
+	if err != nil {
+		http.Error(w, "Could not read HTML file", http.StatusInternalServerError)
+		fmt.Println("Error reading file:", err)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(html))
+	w.Write(html)
 }
 
 func (r *Router) HandleEngineInfo(w http.ResponseWriter, req *http.Request) {
@@ -79,12 +53,7 @@ func (r *Router) HandleEngineInfo(w http.ResponseWriter, req *http.Request) {
 		Version: r.Engine.Version,
 	}
 	
-
 	json.NewEncoder(w).Encode(response)
-}
-
-func (r *Router) HandleHello(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("Received Hello!")
 }
 
 func (r *Router) HandleStartProcessModel(w http.ResponseWriter, req *http.Request) {

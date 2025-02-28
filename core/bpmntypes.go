@@ -31,7 +31,8 @@ type StartEvent struct {
 // Task repräsentiert eine BPMN-Task
 type Task struct {
 	XMLName  xml.Name   `xml:"task"`
-	ID       string     `xml:"id,attr"`
+    ID       string     `xml:"id,attr"`
+    Name     string     `xml:"name,attr"`
 	Incoming []string   `xml:"incoming"`
 	Outgoing []string   `xml:"outgoing"`
 }

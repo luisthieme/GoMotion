@@ -11,9 +11,18 @@ import (
 
 // Event struct represents a process or flow node event
 type Event struct {
-	Name string `json:"name"`
-	Type string `json:"type"` // "processinstance" or "flownode"
-	Id   string `json:"id"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Id          string `json:"id"`
+	ElementName string `json:"element_name"`
+}
+
+type TaskEvent struct {
+	Name              string `json:"name"`
+	Type              string `json:"type"`
+	Id                string `json:"id"`
+	ElementName       string `json:"element_name"`
+	ProcessInstanceId string `json:"process_instance_id"`
 }
 
 // EventManager manages WebSocket clients
@@ -75,7 +84,7 @@ func (em *EventManager) removeClient(conn *websocket.Conn) {
 }
 
 // Broadcast sends an event to all connected clients
-func (em *EventManager) Broadcast(event Event) {
+func (em *EventManager) Broadcast(event interface{}) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 

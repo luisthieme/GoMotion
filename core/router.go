@@ -27,6 +27,10 @@ func (r *Router) RegisterRoutes() {
 	r.Mux.HandleFunc(basePath + "/start/{processModelId}", r.HandleStartProcessModel)
 	
 	r.Mux.HandleFunc(basePath + "/process_instances", r.HandleProcessInstances)
+
+	r.Mux.HandleFunc(basePath + "/tasks/{taskId}/complete", r.HandleTaskCompletion)
+
+	r.Mux.HandleFunc(basePath + "/tasks", r.HandleTasks)
 }
 
 func (r *Router) HandleBase(w http.ResponseWriter, req *http.Request) {
@@ -187,4 +191,68 @@ func (r *Router) HandleProcessModels(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 }
+
+func (r *Router) HandleTasks(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	// Check that we're handling a GET request
+	if req.Method != http.MethodGet {
+		http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Initialize an empty slice for task details
+	taskDetails := []map[string]string{}
+	
+	r.Engine.PendingTasks.Range(func(key, value interface{}) bool {
+		// Cast the value to a PendingTask
+		t, ok := value.(PendingTask)
+		if !ok {
+			return true // Skip this item if casting fails
+		}
+		
+		// Get the ID from the key
+		id, ok := key.(string)
+		if !ok {
+			return true // Skip this item if key is not a string
+		}
+		
+		// Create a task detail object in the requested format
+		taskDetail := map[string]string{
+			"name":              "pending",
+			"type":              "task",
+			"id":                id,
+			"element_name":       t.Name,
+			"process_instance_id": t.ProcessInstanceId,
+		}
+		
+		taskDetails = append(taskDetails, taskDetail)
+		return true
+	})
+	
+	// This will return "[]" if taskDetails is empty
+	err := json.NewEncoder(w).Encode(taskDetails)
+	if err != nil {
+		http.Error(w, `{"error":"Failed to encode response"}`, http.StatusInternalServerError)
+		return
+	}
+}
+
+func (r *Router) HandleTaskCompletion(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	taskId := req.PathValue("taskId")
+	success := r.Engine.CompletePendingTask(taskId)
+
+	if success {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"message": "Task completed successfully"}`))
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error": "Task not found or already completed"}`))
+	}
+}
+
 

@@ -15,17 +15,17 @@
     <bpmn:startEvent id="StartEvent_1" name="Start">
       <bpmn:outgoing>Flow_1yqf69c</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:task id="Activity_1t2iqix">
+    <bpmn:task id="Activity_1t2iqix" name="Task_1">
       <bpmn:incoming>Flow_1yqf69c</bpmn:incoming>
       <bpmn:outgoing>Flow_1qsmwlp</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sequenceFlow id="Flow_1yqf69c" sourceRef="StartEvent_1" targetRef="Activity_1t2iqix" />
-    <bpmn:task id="Activity_002b5mh">
+    <bpmn:task id="Activity_002b5mh" name="Task_2">
       <bpmn:incoming>Flow_1qsmwlp</bpmn:incoming>
       <bpmn:outgoing>Flow_14hfmpg</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sequenceFlow id="Flow_1qsmwlp" sourceRef="Activity_1t2iqix" targetRef="Activity_002b5mh" />
-    <bpmn:endEvent id="Event_0k4kcxm">
+    <bpmn:endEvent id="Event_0k4kcxm" name="End">
       <bpmn:incoming>Flow_14hfmpg</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_14hfmpg" sourceRef="Activity_002b5mh" targetRef="Event_0k4kcxm" />
@@ -48,12 +48,17 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1t2iqix_di" bpmnElement="Activity_1t2iqix">
         <dc:Bounds x="180" y="130" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_002b5mh_di" bpmnElement="Activity_002b5mh">
         <dc:Bounds x="340" y="130" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0k4kcxm_di" bpmnElement="Event_0k4kcxm">
         <dc:Bounds x="502" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="510" y="195" width="20" height="14" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1yqf69c_di" bpmnElement="Flow_1yqf69c">
         <di:waypoint x="128" y="170" />

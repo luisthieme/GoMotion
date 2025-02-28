@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 )
 
+// TODO: evaluate if sync.Map or sync.RWMutex or a normal ap should be used in the cases
 type Engine struct {
 	Name               string
 	Port               string
@@ -16,6 +18,7 @@ type Engine struct {
 	ProcessDefinitions map[string]Definitions
 	ProcessModels      map[string]ProcessModel
 	ProcessInstances   map[string]ProcessInstance
+	PendingTasks	   sync.Map
 }
 
 
@@ -31,7 +34,6 @@ func NewEngine(name, port string) *Engine {
 		ProcessDefinitions: make(map[string]Definitions),
 		ProcessModels:      make(map[string]ProcessModel),
 		ProcessInstances: 	make(map[string]ProcessInstance),
-
 	}
 }
 
@@ -125,4 +127,39 @@ func (e *Engine) LoadProcessModels() {
 
 	log.Println("Process models loaded successfully")
 }
+
+// Register a pending task with a completion callback
+func (e *Engine) RegisterPendingTask(taskID string, pendingTask PendingTask) {
+	e.PendingTasks.Store(taskID, pendingTask)
+	fmt.Println("Registered pending task:", taskID)
+}
+
+// Finish a task by calling the stored callback
+func (e *Engine) CompletePendingTask(taskID string) bool {
+	if taskValue, ok := e.PendingTasks.Load(taskID); ok {
+		// Get the pending task from the map
+		pendingTask, valid := taskValue.(PendingTask)
+		if !valid {
+			fmt.Println("Task found but invalid type:", taskID)
+			return false
+		}
+		
+		// Remove the task from the map before executing callback
+		e.PendingTasks.Delete(taskID)
+		
+		// Execute the callback function if it exists
+		if pendingTask.Callback != nil {
+			pendingTask.Callback() // Execute the callback function
+			fmt.Println("Completed task:", taskID, "name:", pendingTask.Name)
+			return true
+		} else {
+			fmt.Println("Task found but callback is nil:", taskID)
+			return false
+		}
+	} else {
+		fmt.Println("Task not found:", taskID)
+	}
+	return false
+}
+
 

@@ -145,8 +145,9 @@ func (r *Router) HandleProcessInstances(w http.ResponseWriter, req *http.Request
 		var processInstances []ProcessInstanceApiResponse
 		for rows.Next() {
 			var pi ProcessInstanceApiResponse
-			err := rows.Scan(&pi.Id, &pi.ProcessModelName, &pi.State, &pi.StartedAt, &pi.FinishedAt)
+			err := rows.Scan(&pi.Id, &pi.ProcessModelName, &pi.State)
 			if err != nil {
+				fmt.Println(err)
 				http.Error(w, "Failed to scan process instance", http.StatusInternalServerError)
 				return
 			}

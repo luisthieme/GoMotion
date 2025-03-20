@@ -106,8 +106,9 @@ func (d *Database) LoadAllXMLs() ([]string, error) {
 func (d *Database) SaveProcessInstanceToDB(processInstance *ProcessInstance) error {
 	fmt.Println("Saving ProcessInstance to DB...")
 	// Insert the ProcessInstance data into the table
+	fmt.Println(processInstance)
 	_, err := d.Db.Exec(
-		"INSERT INTO process_instances (id, process_model_name, current_element, started_at, state) VALUES (?,?,?,?)",
+		"INSERT INTO process_instances (id, process_model_name, current_element, started_at, state) VALUES (?,?,?,?,?)",
 		processInstance.Id,
 		processInstance.ProcessModel.Name,
 		processInstance.CurrentElement,

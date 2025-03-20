@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -15,6 +16,15 @@ type Event struct {
 	Type        string `json:"type"`
 	Id          string `json:"id"`
 	ElementName string `json:"element_name"`
+}
+
+type ProcessInstanceEvent struct {
+	Name             string    `json:"name"`
+	Type             string    `json:"type"`
+	Id               string    `json:"id"`
+	ProcessModelName string    `json:"process_model_name"`
+	StartedAt        time.Time `json:"started_at"`
+	FinishedAt       time.Time `json:"finished_at"`
 }
 
 type TaskEvent struct {

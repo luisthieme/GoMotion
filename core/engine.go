@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 // TODO: evaluate if sync.Map or sync.RWMutex or a normal ap should be used in the cases
@@ -12,6 +13,7 @@ type Engine struct {
 	Name               string
 	Port               string
 	Version 	       string
+	StartedAt          time.Time
 	Router             Router
 	EventManager       EventManager
 	Db				   *Database
@@ -27,7 +29,7 @@ func NewEngine(name, port string) *Engine {
 	return &Engine{
 		Name:               name,
 		Port:               port,
-		Version: 			"0.0.1",
+		Version: 			"0.0.1",        
 		Router: 			Router{},
 		EventManager:       *NewEventManager(),
 		Db:                 NewDatabase(),
@@ -51,6 +53,9 @@ func (e *Engine) Start() {
 	e.LoadProcessModels()
 	
 	fmt.Println("Engine running on http://localhost:" + e.Port)
+
+	e.StartedAt = time.Now()
+	
 	log.Fatal(http.ListenAndServe(":" + e.Port, e.Router.Mux))
 }
 
@@ -73,7 +78,6 @@ func (e *Engine) LoadAndAddProcessDefinition(filePath string) error {
 	return err
 }
 
-// 
 func (e *Engine) AddProcessDefinition(definition *Definitions) {
 	e.ProcessDefinitions[definition.XMLName.Local] = *definition
 

@@ -1,12 +1,17 @@
 package core
 
+import "time"
+
 type EngineInfo struct {
-	Name    string
-	Version string
+	Name      string    `json:"name"`
+	Version   string    `json:"version"`
+	StartedAt time.Time `json:"started_at"`
 }
 
 type ProcessInstanceApiResponse struct {
-	Id               string `json:"id"`
-	ProcessModelName string `json:"process_model_name"`
-	State            string `json:"state"`
+	Id               string    `json:"id"`
+	ProcessModelName string    `json:"process_model_name"`
+	State            string    `json:"state"`
+	StartedAt        time.Time `json:"started_at"`
+	FinishedAt       time.Time `json:"finished_at"`
 }

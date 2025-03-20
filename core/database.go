@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/xml"
 	"fmt"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -42,6 +43,8 @@ func (d *Database) InitializeDB() error {
 		id TEXT PRIMARY KEY,
 		process_model_name TEXT,
 		current_element TEXT,
+		started_at DATETIME,
+		finished_at DATETIME,
 		state TEXT
 	);
 	`
@@ -99,20 +102,18 @@ func (d *Database) LoadAllXMLs() ([]string, error) {
 	return xmls, nil
 }
 
-
 // Save ProcessInstance to 'process_instances' table
 func (d *Database) SaveProcessInstanceToDB(processInstance *ProcessInstance) error {
 	fmt.Println("Saving ProcessInstance to DB...")
 	// Insert the ProcessInstance data into the table
 	_, err := d.Db.Exec(
-		"INSERT INTO process_instances (id, process_model_name, current_element, state) VALUES (?,?,?,?)",
+		"INSERT INTO process_instances (id, process_model_name, current_element, started_at, state) VALUES (?,?,?,?)",
 		processInstance.Id,
 		processInstance.ProcessModel.Name,
 		processInstance.CurrentElement,
+		processInstance.StartedAt.Format(time.RFC3339),
 		processInstance.State,
 	)
-
-	// fmt.Printf("Created ProcessInstance: %d", res.LastInsertId())
 
 	if err != nil {
 		return err
@@ -128,6 +129,22 @@ func (d *Database) PersistProcessInstance(processInstance *ProcessInstance) erro
 		"UPDATE process_instances SET state = ?, current_element = ? WHERE id = ?",
 		processInstance.State,
 		processInstance.CurrentElement,
+		processInstance.Id,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *Database) FinishProcessInstance(processInstance *ProcessInstance) error {
+	fmt.Printf("Finish ProcessInstance: %s", processInstance.Id)
+	_, err := d.Db.Exec(
+		"UPDATE process_instances SET state = ?, current_element = ?, finished_at = ? WHERE id = ?",
+		processInstance.State,
+		processInstance.CurrentElement,
+		processInstance.FinishedAt.Format(time.RFC3339),
 		processInstance.Id,
 	)
 	if err != nil {

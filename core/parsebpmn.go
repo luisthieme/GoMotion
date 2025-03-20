@@ -26,6 +26,7 @@ func ParseBpmnFromFile(filePath string) (*Definitions, error) {
 func ParseFromBpmnString(xmlString string) (*Definitions, error) {
 	var definitions Definitions
 	err := xml.Unmarshal([]byte(xmlString), &definitions)
+	fmt.Printf("parsed bpmn definition: %s", definitions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse xml: %w", err)
 	}

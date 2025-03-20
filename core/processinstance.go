@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -10,6 +11,8 @@ type ProcessInstance struct {
 	Id string
 	ProcessModel ProcessModel
 	CurrentElement string
+	StartedAt time.Time
+	FinishedAt time.Time
 	State string
 	Engine *Engine
 }
@@ -33,9 +36,10 @@ func (p *ProcessInstance) Execute() error {
 	}
 
 	p.State = "running"
+	p.StartedAt = time.Now()
 	p.Engine.Db.SaveProcessInstanceToDB(p)
 
-	p.Engine.EventManager.Broadcast(Event{ Name: "executing", Type: "processinstance", Id: p.Id})
+	p.Engine.EventManager.Broadcast(ProcessInstanceEvent{ Name: "executing", Type: "processinstance", Id: p.Id, ProcessModelName: p.ProcessModel.Name, StartedAt: p.StartedAt, FinishedAt: p.FinishedAt})
 	
 	startEvent := p.ProcessModel.StartEvents[0]
 	p.CurrentElement = startEvent.ID
@@ -49,8 +53,9 @@ func (p *ProcessInstance) Execute() error {
 		if p.CurrentElement == "" {
 			fmt.Println("ProcessInstance finished.")
 			p.State = "finished"
+			p.FinishedAt = time.Now()
 			p.Engine.Db.PersistProcessInstance(p)
-			p.Engine.EventManager.Broadcast(Event{ Name: "finished", Type: "processinstance", Id: p.Id})
+			p.Engine.EventManager.Broadcast(ProcessInstanceEvent{ Name: "finished", Type: "processinstance", Id: p.Id, ProcessModelName: p.ProcessModel.Name, StartedAt: p.StartedAt, FinishedAt: p.FinishedAt})
 			break
 		}
 

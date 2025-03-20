@@ -50,11 +50,13 @@ func (r *Router) HandleBase(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) HandleEngineInfo(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 
 	response := EngineInfo{
 		Name: r.Engine.Name,
 		Version: r.Engine.Version,
+		StartedAt: r.Engine.StartedAt,
 	}
 	
 	json.NewEncoder(w).Encode(response)
@@ -68,6 +70,16 @@ func (r *Router) HandleStartProcessModel(w http.ResponseWriter, req *http.Reques
 }
 
 func (r *Router) HandleDeployProcessModel(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+    
+    // Handle preflight OPTIONS request
+    if req.Method == "OPTIONS" {
+        w.WriteHeader(http.StatusOK)
+        return
+    }
+
 	w.Header().Set("Content-Type", "application/json")
 
 	body, err := io.ReadAll(req.Body)
@@ -133,7 +145,7 @@ func (r *Router) HandleProcessInstances(w http.ResponseWriter, req *http.Request
 		var processInstances []ProcessInstanceApiResponse
 		for rows.Next() {
 			var pi ProcessInstanceApiResponse
-			err := rows.Scan(&pi.Id, &pi.ProcessModelName, &pi.State)
+			err := rows.Scan(&pi.Id, &pi.ProcessModelName, &pi.State, &pi.StartedAt, &pi.FinishedAt)
 			if err != nil {
 				http.Error(w, "Failed to scan process instance", http.StatusInternalServerError)
 				return

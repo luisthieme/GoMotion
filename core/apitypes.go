@@ -11,7 +11,8 @@ type EngineInfo struct {
 type ProcessInstanceApiResponse struct {
 	Id               string    `json:"id"`
 	ProcessModelName string    `json:"process_model_name"`
-	State            string    `json:"state"`
+	CurrentElement   string    `json:"current_element"`
 	StartedAt        time.Time `json:"started_at"`
-	FinishedAt       time.Time `json:"finished_at"`
+	FinishedAt       *time.Time `json:"finished_at"`
+	State            string    `json:"state"`
 }

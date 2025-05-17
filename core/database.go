@@ -106,13 +106,13 @@ func (d *Database) LoadAllXMLs() ([]string, error) {
 func (d *Database) SaveProcessInstanceToDB(processInstance *ProcessInstance) error {
 	fmt.Println("Saving ProcessInstance to DB...")
 	// Insert the ProcessInstance data into the table
-	fmt.Println(processInstance)
 	_, err := d.Db.Exec(
-		"INSERT INTO process_instances (id, process_model_name, current_element, started_at, state) VALUES (?,?,?,?,?)",
+		"INSERT INTO process_instances (id, process_model_name, current_element, started_at, finished_at, state) VALUES (?,?,?,?,?,?)",
 		processInstance.Id,
 		processInstance.ProcessModel.Name,
-		processInstance.CurrentElement,
+		nil,
 		processInstance.StartedAt.Format(time.RFC3339),
+		nil,
 		processInstance.State,
 	)
 
@@ -126,6 +126,7 @@ func (d *Database) SaveProcessInstanceToDB(processInstance *ProcessInstance) err
 // Update the state and current_element of an existing process instance
 func (d *Database) PersistProcessInstance(processInstance *ProcessInstance) error {
 	fmt.Printf("Updating ProcessInstance: %s", processInstance.Id)
+	fmt.Println(processInstance.CurrentElement)
 	_, err := d.Db.Exec(
 		"UPDATE process_instances SET state = ?, current_element = ? WHERE id = ?",
 		processInstance.State,

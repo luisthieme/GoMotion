@@ -23,6 +23,7 @@ type ProcessInstanceEvent struct {
 	Type             string    `json:"type"`
 	Id               string    `json:"id"`
 	ProcessModelName string    `json:"process_model_name"`
+	CurrentElement   string    `json:"current_element"`
 	StartedAt        time.Time `json:"started_at"`
 	FinishedAt       time.Time `json:"finished_at"`
 }

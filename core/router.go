@@ -135,7 +135,7 @@ func (r *Router) HandleProcessInstances(w http.ResponseWriter, req *http.Request
 
 	switch req.Method {
 	case http.MethodGet:
-		rows, err := r.Engine.Db.Db.Query("SELECT id, process_model_name, state FROM process_instances")
+		rows, err := r.Engine.Db.Db.Query("SELECT id, process_model_name, current_element, started_at, finished_at, state FROM process_instances")
 		if err != nil {
 			http.Error(w, "Failed to query process instances", http.StatusInternalServerError)
 			return
@@ -145,7 +145,7 @@ func (r *Router) HandleProcessInstances(w http.ResponseWriter, req *http.Request
 		var processInstances []ProcessInstanceApiResponse
 		for rows.Next() {
 			var pi ProcessInstanceApiResponse
-			err := rows.Scan(&pi.Id, &pi.ProcessModelName, &pi.State)
+			err := rows.Scan(&pi.Id, &pi.ProcessModelName, &pi.CurrentElement, &pi.StartedAt, &pi.FinishedAt, &pi.State)
 			if err != nil {
 				fmt.Println(err)
 				http.Error(w, "Failed to scan process instance", http.StatusInternalServerError)

@@ -39,10 +39,11 @@ func (p *ProcessInstance) Execute() error {
 	p.StartedAt = time.Now()
 	p.Engine.Db.SaveProcessInstanceToDB(p)
 
-	p.Engine.EventManager.Broadcast(ProcessInstanceEvent{ Name: "executing", Type: "processinstance", Id: p.Id, ProcessModelName: p.ProcessModel.Name, StartedAt: p.StartedAt, FinishedAt: p.FinishedAt})
+	p.Engine.EventManager.Broadcast(ProcessInstanceEvent{ Name: "started", Type: "processinstance", Id: p.Id, ProcessModelName: p.ProcessModel.Name, CurrentElement: p.CurrentElement, StartedAt: p.StartedAt, FinishedAt: p.FinishedAt})
 	
 	startEvent := p.ProcessModel.StartEvents[0]
 	p.CurrentElement = startEvent.ID
+	p.updateProcessInstanceState()
 	startEventHandler := NewStartEventHanler(&startEvent, p)
 	startEventHandler.Execute()
 	p.CurrentElement = p.getNextElementFromFlow(startEvent.Outgoing)
@@ -55,7 +56,7 @@ func (p *ProcessInstance) Execute() error {
 			p.State = "finished"
 			p.FinishedAt = time.Now()
 			p.Engine.Db.PersistProcessInstance(p)
-			p.Engine.EventManager.Broadcast(ProcessInstanceEvent{ Name: "finished", Type: "processinstance", Id: p.Id, ProcessModelName: p.ProcessModel.Name, StartedAt: p.StartedAt, FinishedAt: p.FinishedAt})
+			p.Engine.EventManager.Broadcast(ProcessInstanceEvent{ Name: "finished", Type: "processinstance", Id: p.Id, ProcessModelName: p.ProcessModel.Name, CurrentElement: p.CurrentElement, StartedAt: p.StartedAt, FinishedAt: p.FinishedAt})
 			break
 		}
 
@@ -86,6 +87,7 @@ func (p *ProcessInstance) Execute() error {
 		}
 
 		if task != nil {
+			p.updateProcessInstanceState()
 			taskHandler := NewTaskHandler(task, p)
 			taskHandler.Execute()
 			p.CurrentElement = p.getNextElementFromFlow(task.Outgoing)
@@ -106,5 +108,10 @@ func (p *ProcessInstance) getNextElementFromFlow(outgoing []string) string {
 		}
 	}
 	return ""
+}
+
+func (p *ProcessInstance) updateProcessInstanceState() {
+	p.Engine.Db.PersistProcessInstance(p)
+	p.Engine.EventManager.Broadcast(ProcessInstanceEvent{ Name: "running", Type: "processinstance", Id: p.Id, ProcessModelName: p.ProcessModel.Name, CurrentElement: p.CurrentElement, StartedAt: p.StartedAt, FinishedAt: p.FinishedAt})
 }
 

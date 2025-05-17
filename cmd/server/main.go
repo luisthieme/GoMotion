@@ -8,9 +8,9 @@ import (
 
 func main() {
 	engine := core.NewEngine("luis_engine", "6969")
-	go engine.Start()
+	engine.Start()
 
-	engine2 := core.NewEngine("backup_engine", "8787")
+	// engine2 := core.NewEngine("backup_engine", "8787")
 
-	engine2.Start()
+	// engine2.Start()
 }

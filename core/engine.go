@@ -98,14 +98,14 @@ func (e *Engine) InitRouter() {
 }
 
 // Starts a ProcessInstance for a given ProcessModel
-func (e *Engine) StartProcess(processModelId string) error {
+func (e *Engine) StartProcess(processModelId string, token Token ) error {
 	processModel := e.ProcessModels[processModelId]
 
 	processInstance := NewProcessInstance(processModel, e)
 
 	e.ProcessInstances[processInstance.Id] = *processInstance
 
-	go processInstance.Execute()
+	go processInstance.Execute(token)
 
 	return nil
 }

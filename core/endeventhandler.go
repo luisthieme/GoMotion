@@ -16,7 +16,7 @@ func NewEndEventHandler(endEvent *EndEvent, processInstance *ProcessInstance) *E
 	return &EndEventHandler{ Id: uuid.NewString(), EndEvent: endEvent, ProcessInstance: processInstance}
 } 
 
-func (e *EndEventHandler) Execute() {
+func (e *EndEventHandler) Execute(token Token) {
 	e.ProcessInstance.Engine.EventManager.Broadcast(Event{ Name: "executing", Type: "endevent", Id: e.Id})
 	fmt.Println("Executing EndEvent")
 	e.ProcessInstance.Engine.EventManager.Broadcast(Event{ Name: "finished", Type: "endevent", Id: e.Id})

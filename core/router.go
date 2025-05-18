@@ -66,7 +66,16 @@ func (r *Router) HandleStartProcessModel(w http.ResponseWriter, req *http.Reques
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	processModelId := req.PathValue("processModelId")
 
-	r.Engine.StartProcess(processModelId)
+	var token Token
+	if req.Body != nil {
+		defer req.Body.Close()
+		if err := json.NewDecoder(req.Body).Decode(&token); err != nil && err != io.EOF {
+			http.Error(w, "invalid token JSON", http.StatusBadRequest)
+			return
+		}
+	}
+
+	r.Engine.StartProcess(processModelId, token)
 }
 
 func (r *Router) HandleDeployProcessModel(w http.ResponseWriter, req *http.Request) {

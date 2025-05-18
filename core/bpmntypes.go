@@ -2,6 +2,9 @@ package core
 
 import "encoding/xml"
 
+
+type Token map[string]any
+
 // Definitions repräsentiert das Wurzelelement der BPMN-Datei
 type Definitions struct {
 	XMLName    xml.Name  `xml:"definitions"`

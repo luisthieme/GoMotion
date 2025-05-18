@@ -30,7 +30,7 @@ func NewTaskHandler(task *Task, processInstance *ProcessInstance) *TaskHandler {
 }
 
 // Execute a Task and wait for a completion signal via the API
-func (t *TaskHandler) Execute() {
+func (t *TaskHandler) Execute(token Token) {
 	t.ProcessInstance.Engine.EventManager.Broadcast(TaskEvent{Name: "executing", Type: "task", Id: t.Id, ElementName: t.Task.Name, ProcessInstanceId: t.ProcessInstance.Id})
 	fmt.Println("Task is now waiting for completion...")
 

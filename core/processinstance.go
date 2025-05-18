@@ -26,7 +26,7 @@ func NewProcessInstance(processModel ProcessModel, engine *Engine) *ProcessInsta
 }
 
 // Execute starts the process instance and executes events and tasks based on SequenceFlows.
-func (p *ProcessInstance) Execute() error {
+func (p *ProcessInstance) Execute(token Token) error {
 	fmt.Println("Executing process instance:", p.Id)
 
 	if len(p.ProcessModel.StartEvents) < 1 {
@@ -45,7 +45,7 @@ func (p *ProcessInstance) Execute() error {
 	p.CurrentElement = startEvent.ID
 	p.updateProcessInstanceState()
 	startEventHandler := NewStartEventHanler(&startEvent, p)
-	startEventHandler.Execute()
+	startEventHandler.Execute(token)
 	p.CurrentElement = p.getNextElementFromFlow(startEvent.Outgoing)
 
 
@@ -72,7 +72,7 @@ func (p *ProcessInstance) Execute() error {
 
 		if endEvent != nil {
 			endEventHandler := NewEndEventHandler(endEvent, p)
-			endEventHandler.Execute()
+			endEventHandler.Execute(token)
 			p.CurrentElement = ""
 		}
 
@@ -89,7 +89,7 @@ func (p *ProcessInstance) Execute() error {
 		if task != nil {
 			p.updateProcessInstanceState()
 			taskHandler := NewTaskHandler(task, p)
-			taskHandler.Execute()
+			taskHandler.Execute(token)
 			p.CurrentElement = p.getNextElementFromFlow(task.Outgoing)
 		}
 		
